@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="แปลงรูปภาพและ PDF เป็น Word, Excel และ PowerPoint ผ่านเบราว์เซอร์ โดยประมวลผลไฟล์ในเครื่องของคุณ">
+  <title>ห้องแปลงไฟล์</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="./assets/css/base.css">
+  <link rel="stylesheet" href="./assets/css/app.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.bundle.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module" src="./assets/js/app.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <b>ห้องแปลงไฟล์</b>
+    </div>
+    <div class="local"><i></i>ไฟล์ประมวลผลในเครื่องของคุณ ไม่ถูกอัปโหลด</div>
+  </header>
+
+  <div class="shell">
+    <nav id="nav" aria-label="เลือกเครื่องมือ"></nav>
+    <main>
+      <section class="card head">
+        <h1 id="tTitle"></h1>
+        <p id="tDesc"></p>
+        <div class="fmt" id="tFmt"></div>
+      </section>
+
+      <section class="card workspace">
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="เลือกไฟล์">
+          <strong id="dropT">ลากไฟล์มาวางที่นี่ หรือกดเพื่อเลือก</strong>
+          <span id="dropS"></span>
+        </div>
+        <input type="file" id="picker" hidden>
+        <ul class="flist" id="flist"></ul>
+        <div class="opts" id="opts"></div>
+        <div class="note" id="note"></div>
+        <div class="runrow">
+          <button class="btn primary" id="run" type="button">เริ่มแปลง</button>
+          <button class="btn" id="stop" type="button" hidden>หยุด</button>
+          <button class="btn" id="clear" type="button">ล้างไฟล์</button>
+        </div>
+        <div class="prog" id="prog" hidden><div class="bar"><i id="barI"></i></div><span id="progT"></span></div>
+      </section>
+
+      <section class="card res" id="resCard" hidden>
+        <h2 id="resH">ผลลัพธ์</h2>
+        <div id="resErr"></div>
+        <div class="rl" id="rl"></div>
+        <div class="ftr" id="ftr"></div>
+      </section>
+    </main>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+</body>
+</html>

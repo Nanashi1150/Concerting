@@ -1,0 +1,941 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ห้องแปลงไฟล์</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Minimalist: white ground, ink as the only accent, hairlines instead of boxes.
+   Left text index, one quiet working column. */
+:root{
+  --bg:#FFFFFF;
+  --surface:#FFFFFF;
+  --surface2:#F5F6F7;
+  --ink:#111418;
+  --ink2:#454B55;
+  --muted:#80858F;
+  --line:#E4E6EA;
+  --accent:#111418;
+  --accent-fg:#FFFFFF;
+  --accent-soft:#F1F2F4;
+  --ok:#0E7C57;
+  --warn:#A4560A;
+  --err:#B3261E;
+  --err-soft:#FCEFEE;
+  --f-display:"Anuphan","IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai","Noto Sans Thai","Sarabun",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1114;--surface:#0F1114;--surface2:#181B20;--ink:#EDEEF0;--ink2:#B7BBC3;--muted:#7C828D;--line:#252A32;
+    --accent:#EDEEF0;--accent-fg:#0F1114;--accent-soft:#1B1F26;--ok:#4FD1A1;--warn:#F2B25C;--err:#FF8A80;--err-soft:#2A1918;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1114;--surface:#0F1114;--surface2:#181B20;--ink:#EDEEF0;--ink2:#B7BBC3;--muted:#7C828D;--line:#252A32;
+  --accent:#EDEEF0;--accent-fg:#0F1114;--accent-soft:#1B1F26;--ok:#4FD1A1;--warn:#F2B25C;--err:#FF8A80;--err-soft:#2A1918;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;padding-bottom:28px;margin-bottom:36px;border-bottom:1px solid var(--line)}
+.brand b{font-family:var(--f-display);font-weight:600;font-size:1.2rem;letter-spacing:-.01em}
+.local{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:8px}
+.local i{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
+
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px;align-items:start}
+nav{position:sticky;top:max(24px,env(safe-area-inset-top,0px))}
+.grp{font-size:.74rem;color:var(--muted);padding:22px 0 6px;font-weight:500}
+.grp:first-child{padding-top:0}
+.nb{display:block;width:100%;text-align:left;background:none;border:0;padding:5px 0;cursor:pointer;min-width:0;color:var(--muted)}
+.nb:hover{color:var(--ink)}
+.nb strong{display:block;font-weight:400;font-size:.94rem;line-height:1.4}
+.nb small{display:none}
+.nb[aria-current="true"]{color:var(--ink)}
+.nb[aria-current="true"] strong{font-weight:600}
+
+main{min-width:0;display:flex;flex-direction:column;gap:32px}
+.card{background:none;border:0;border-radius:0;padding:0}
+.head h1{font-family:var(--f-display);font-weight:500;font-size:1.9rem;line-height:1.3;margin:0 0 8px;text-wrap:balance;letter-spacing:-.01em}
+.head p{margin:0;color:var(--ink2);max-width:60ch}
+.fmt{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;align-items:center}
+.chip{font-family:var(--f-mono);font-size:.76rem;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 7px}
+.arrow{color:var(--muted);font-family:var(--f-mono);font-size:.85rem}
+
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;min-height:148px;padding:24px 16px;cursor:pointer;border:1px dashed var(--line);border-radius:8px;background:none;transition:border-color .15s,background-color .15s}
+.drop:hover{border-color:var(--muted)}
+.drop.over{border-color:var(--ink);background:var(--surface2)}
+.drop strong{font-family:var(--f-display);font-size:1rem;font-weight:500}
+.drop span{color:var(--muted);font-size:.84rem}
+
+.flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.flist:empty{display:none}
+.fi{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:8px 0;min-width:0}
+.fi:first-child{border-top:1px solid var(--line)}
+.fi .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.92rem}
+.fi .s{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);flex:none}
+.ib{background:none;border:1px solid transparent;border-radius:6px;width:30px;height:30px;cursor:pointer;color:var(--muted);display:grid;place-items:center;flex:none;font-size:.8rem}
+.ib:hover{color:var(--ink);border-color:var(--line)}
+.ib:disabled{opacity:.3;cursor:default}
+
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px 28px}
+.opts:empty{display:none}
+.opt{display:flex;flex-direction:column;gap:6px;min-width:0}
+.opt>label,.opt .lb{font-size:.82rem;color:var(--muted)}
+.opt input[type=text],.opt input[type=password],.opt input[type=number],.opt select{width:100%;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:7px 0;min-height:40px}
+.opt input[type=text]:focus,.opt input[type=password]:focus,.opt input[type=number]:focus,.opt select:focus{border-bottom-color:var(--ink);outline:none}
+.opt select{background:var(--bg)}
+.opt input[type=range]{width:100%;accent-color:var(--ink);min-height:40px}
+.opt .rv{font-family:var(--f-mono);font-size:.78rem;color:var(--ink)}
+.opt .hint{font-size:.76rem;color:var(--muted);line-height:1.5}
+.opt.ck{flex-direction:row;align-items:center;gap:10px}
+.opt.ck input{width:16px;height:16px;accent-color:var(--ink)}
+.opt.ck label{font-size:.9rem;color:var(--ink)}
+
+.note{font-size:.84rem;color:var(--muted);max-width:68ch}
+.note.warn{color:var(--ink2)}
+.note:empty{display:none}
+
+.runrow{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:none;border-radius:6px;padding:9px 20px;font-weight:500;cursor:pointer;min-height:42px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{opacity:.88}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.sm{min-height:34px;padding:5px 14px;font-size:.88rem}
+
+.prog{display:flex;flex-direction:column;gap:8px}
+.bar{height:2px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .2s}
+.prog span{font-size:.82rem;color:var(--muted)}
+
+.res{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:28px}
+.res h2{font-family:var(--f-display);font-weight:500;font-size:1.05rem;margin:0}
+.rl{display:flex;flex-direction:column}
+.ri{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);padding:12px 0;min-width:0}
+.ri:first-child{border-top:1px solid var(--line)}
+.th{width:48px;height:48px;border-radius:4px;background:var(--surface2);flex:none;display:grid;place-items:center;overflow:hidden;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.th img{width:100%;height:100%;object-fit:cover}
+.ri .m{flex:1;min-width:0}
+.ri .m b{display:block;font-weight:500;font-size:.92rem;overflow-wrap:anywhere}
+.ri .m small{display:block;color:var(--muted);font-size:.78rem;font-family:var(--f-mono)}
+.ri .m small.g{color:var(--ok)}
+.ri .m small.w{color:var(--warn)}
+.err{background:var(--err-soft);color:var(--err);border-radius:6px;padding:10px 14px;font-size:.88rem}
+.ftr{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:6px;font-size:.86rem;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100vw - 32px);z-index:20}
+#toast.on{opacity:1}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:28px}
+  .top{margin-bottom:24px;padding-bottom:20px}
+  nav{position:static;display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;align-items:stretch}
+  .grp{display:none}
+  .nb{width:auto;flex:none;white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:5px 14px}
+  .nb[aria-current="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+  .head h1{font-size:1.5rem}
+}
+@media (prefers-reduced-motion:reduce){.bar i,#toast,.drop{transition:none}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <b>ห้องแปลงไฟล์</b>
+    </div>
+    <div class="local"><i></i>ไฟล์ประมวลผลในเครื่องของคุณ ไม่ถูกอัปโหลด</div>
+  </header>
+
+  <div class="shell">
+    <nav id="nav" aria-label="เลือกเครื่องมือ"></nav>
+    <main>
+      <section class="card head">
+        <h1 id="tTitle"></h1>
+        <p id="tDesc"></p>
+        <div class="fmt" id="tFmt"></div>
+      </section>
+
+      <section class="card" style="display:flex;flex-direction:column;gap:20px">
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="เลือกไฟล์">
+          <strong id="dropT">ลากไฟล์มาวางที่นี่ หรือกดเพื่อเลือก</strong>
+          <span id="dropS"></span>
+        </div>
+        <input type="file" id="picker" hidden>
+        <ul class="flist" id="flist"></ul>
+        <div class="opts" id="opts"></div>
+        <div class="note" id="note"></div>
+        <div class="runrow">
+          <button class="btn primary" id="run" type="button">เริ่มแปลง</button>
+          <button class="btn" id="stop" type="button" hidden>หยุด</button>
+          <button class="btn" id="clear" type="button">ล้างไฟล์</button>
+        </div>
+        <div class="prog" id="prog" hidden><div class="bar"><i id="barI"></i></div><span id="progT"></span></div>
+      </section>
+
+      <section class="card res" id="resCard" hidden>
+        <h2 id="resH">ผลลัพธ์</h2>
+        <div id="resErr"></div>
+        <div class="rl" id="rl"></div>
+        <div class="ftr" id="ftr"></div>
+      </section>
+    </main>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var fmtB=function(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(n<10240?1:0)+' KB':(n/1048576).toFixed(2)+' MB'};
+var baseName=function(n){return n.replace(/\.[^.\/\\]+$/,'')};
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+var toastT;
+function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},2800)}
+function need(n){if(!window[n])throw new Error('โหลดส่วนประกอบของเครื่องมือไม่สำเร็จ ลองรีเฟรชหน้านี้');return window[n]}
+function toBlob(c,t,q){return new Promise(function(res,rej){c.toBlob(function(b){b?res(b):rej(new Error('สร้างไฟล์ภาพไม่สำเร็จ'))},t,q)})}
+function mkCanvas(w,h){var c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c}
+function freeCanvas(c){c.width=0;c.height=0}
+
+/* ---------- runtime capabilities ---------- */
+function useCap(n){try{return window.claude&&window.claude.use?window.claude.use(n).catch(function(){return null}):Promise.resolve(null)}catch(e){return Promise.resolve(null)}}
+var DL=null,SAMPLE=null;
+var dlP=useCap('downloads').then(function(x){DL=x;return x});
+var smP=useCap('sample').then(function(x){SAMPLE=x;return x});
+
+async function saveFile(name,blob){
+  await dlP;
+  if(DL){
+    try{await DL.save({filename:name,data:blob});toast('บันทึกแล้ว')}
+    catch(e){
+      if(e&&e.code==='declined')return;
+      if(e&&e.code==='rejected_extension'){toast('บันทึกไฟล์ประเภทนี้ไม่ได้');return}
+      toast('บันทึกไม่สำเร็จ ลองอีกครั้ง');
+    }
+    return;
+  }
+  try{var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();toast('กำลังบันทึกไฟล์')}
+  catch(e){toast('เบราว์เซอร์นี้บันทึกไฟล์จากหน้านี้ไม่ได้')}
+}
+
+/* ---------- images ---------- */
+async function loadImage(file){
+  try{return await createImageBitmap(file)}
+  catch(_){
+    var url=URL.createObjectURL(file);
+    try{var img=new Image();img.src=url;await img.decode();return img}
+    catch(e){throw new Error('เปิดไฟล์ภาพ "'+file.name+'" ไม่ได้ (รูปแบบที่เบราว์เซอร์ไม่รองรับ)')}
+    finally{setTimeout(function(){URL.revokeObjectURL(url)},2000)}
+  }
+}
+function dims(s){return [s.naturalWidth||s.width,s.naturalHeight||s.height]}
+function drawImg(src,scale,white){
+  var d=dims(src),c=mkCanvas(d[0]*scale,d[1]*scale),x=c.getContext('2d');
+  if(white){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}
+  x.imageSmoothingQuality='high';x.drawImage(src,0,0,c.width,c.height);return c;
+}
+var EXT={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
+async function encode(c,type,q){
+  var b=await toBlob(c,type,q);
+  if(b.type!==type)throw new Error('เบราว์เซอร์นี้บันทึกเป็น '+EXT[type].toUpperCase()+' ไม่ได้ ลองเลือกรูปแบบอื่น');
+  return b;
+}
+function pickType(file,fmt){
+  if(fmt==='jpeg')return 'image/jpeg';if(fmt==='png')return 'image/png';if(fmt==='webp')return 'image/webp';
+  return EXT[file.type]?file.type:'image/jpeg';
+}
+async function compressOne(src,o){
+  var d=dims(src),s=(o.maxSide&&Math.max(d[0],d[1])>o.maxSide)?o.maxSide/Math.max(d[0],d[1]):1;
+  var white=o.type==='image/jpeg';
+  var c=drawImg(src,s,white);
+  if(!o.targetKB){var b0=await encode(c,o.type,o.q);freeCanvas(c);return {blob:b0,hit:true}}
+  var target=o.targetKB*1024,best=null;
+  for(var a=0;a<7;a++){
+    if(o.type==='image/png'){
+      var bp=await encode(c,o.type);best=bp;
+      if(bp.size<=target){freeCanvas(c);return {blob:bp,hit:true}}
+    }else{
+      var bh=await encode(c,o.type,0.95);
+      if(bh.size<=target){freeCanvas(c);return {blob:bh,hit:true}}
+      var lo=0.05,hi=0.95,ok=null;
+      for(var i=0;i<7;i++){var mid=(lo+hi)/2,bm=await encode(c,o.type,mid);if(bm.size<=target){ok=bm;lo=mid}else hi=mid}
+      if(ok){freeCanvas(c);return {blob:ok,hit:true}}
+      best=await encode(c,o.type,0.05);
+    }
+    s*=0.82;freeCanvas(c);c=drawImg(src,s,white);
+  }
+  freeCanvas(c);return {blob:best,hit:best.size<=target};
+}
+
+/* ---------- PDF helpers ---------- */
+var pdfReady=false;
+function pdfjs(){
+  var p=need('pdfjsLib');
+  if(!pdfReady){p.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';pdfReady=true}
+  return p;
+}
+async function openPdf(file,password){
+  var lib=pdfjs(),data=new Uint8Array(await file.arrayBuffer());
+  try{return await lib.getDocument({data:data,password:password||undefined}).promise}
+  catch(e){
+    if(e&&e.name==='PasswordException')throw new Error(e.code===2?'รหัสผ่านไม่ถูกต้อง':'ไฟล์ "'+file.name+'" ต้องใช้รหัสผ่านเพื่อเปิด ใส่รหัสผ่านในช่องด้านบน');
+    throw new Error('เปิดไฟล์ PDF "'+file.name+'" ไม่ได้ ไฟล์อาจเสียหาย');
+  }
+}
+async function renderPage(page,scale){
+  var base=page.getViewport({scale:1});
+  scale=Math.min(scale,8000/Math.max(base.width,base.height));
+  var vp=page.getViewport({scale:scale}),c=mkCanvas(vp.width,vp.height),x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  await page.render({canvasContext:x,viewport:vp}).promise;
+  return c;
+}
+function parseRange(s,n){
+  s=(s||'').trim();
+  if(!s)return Array.from({length:n},function(_,i){return i+1});
+  var set=new Set();
+  s.split(/[,\s]+/).forEach(function(p){
+    if(!p)return;var m=p.match(/^(\d+)(?:-(\d+))?$/);
+    if(!m)throw new Error('ช่วงหน้าไม่ถูกต้อง: '+p);
+    var a=+m[1],b=m[2]?+m[2]:a;if(a>b){var t=a;a=b;b=t}
+    for(var i=Math.max(1,a);i<=Math.min(n,b);i++)set.add(i);
+  });
+  if(!set.size)throw new Error('ไม่มีหน้าตามช่วงที่ระบุ (ไฟล์มี '+n+' หน้า)');
+  return Array.from(set).sort(function(a,b){return a-b});
+}
+async function pageText(page){
+  var vp=page.getViewport({scale:1}),tc=await page.getTextContent(),its=[];
+  tc.items.forEach(function(it){
+    if(typeof it.str!=='string'||!it.str.trim())return;
+    var t=it.transform;
+    its.push({s:it.str,x:t[4],y:t[5],h:Math.abs(it.height)||Math.hypot(t[2],t[3])||10,w:it.width||0});
+  });
+  its.sort(function(a,b){return (b.y-a.y)||(a.x-b.x)});
+  var lines=[];
+  its.forEach(function(it){
+    var l=lines[lines.length-1];
+    if(l&&Math.abs(l.y-it.y)<=Math.max(2,Math.min(l.h,it.h)*0.45)){l.items.push(it);l.h=Math.max(l.h,it.h)}
+    else lines.push({y:it.y,h:it.h,items:[it]});
+  });
+  lines.forEach(function(l){
+    l.items.sort(function(a,b){return a.x-b.x});
+    var t='',prev=null;
+    l.items.forEach(function(it){
+      if(prev){var gap=it.x-(prev.x+prev.w);if(gap>l.h*0.18&&!/\s$/.test(t)&&!/^\s/.test(it.s))t+=' '}
+      t+=it.s;prev=it;
+    });
+    l.text=t.trim();l.x=l.items[0].x;
+    l.right=Math.max.apply(null,l.items.map(function(i){return i.x+i.w}));
+  });
+  var chars=lines.reduce(function(n,l){return n+l.text.length},0);
+  return {w:vp.width,h:vp.height,lines:lines,chars:chars};
+}
+var CJK=/[฀-๿぀-ヿ㐀-鿿가-힯]/;
+function toParas(pt){
+  var out=[],cur=null,prev=null;
+  if(!pt.lines.length)return out;
+  var minX=Math.min.apply(null,pt.lines.map(function(l){return l.x})),maxR=Math.max.apply(null,pt.lines.map(function(l){return l.right}));
+  pt.lines.forEach(function(l){
+    if(!l.text)return;
+    var np=!cur||(prev.y-l.y)>prev.h*1.75||Math.abs(l.h-prev.h)>prev.h*0.15||prev.right<minX+(maxR-minX)*0.7;
+    if(np){cur={text:l.text,size:l.h};out.push(cur)}
+    else{
+      var join=(CJK.test(cur.text.slice(-1))&&CJK.test(l.text.charAt(0)))?'':' ';
+      cur.text+=join+l.text;
+    }
+    prev=l;
+  });
+  return out;
+}
+async function pdfPagesJpeg(file,pw,scale,q,set,chk){
+  var pdf=await openPdf(file,pw),out=[];
+  for(var i=1;i<=pdf.numPages;i++){
+    chk();
+    var pg=await pdf.getPage(i),b=pg.getViewport({scale:1}),c=await renderPage(pg,scale);
+    out.push({jpg:new Uint8Array(await (await toBlob(c,'image/jpeg',q)).arrayBuffer()),w:b.width,h:b.height});
+    freeCanvas(c);set((i/pdf.numPages)*0.9,'อ่านหน้า '+i+' จาก '+pdf.numPages);
+  }
+  return out;
+}
+
+/* ---------- docx writer ---------- */
+function esc(s){return s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function dPara(text,size){
+  var sz=size?'<w:rPr><w:sz w:val="'+size+'"/><w:szCs w:val="'+size+'"/></w:rPr>':'';
+  return '<w:p><w:r>'+sz+'<w:t xml:space="preserve">'+esc(text)+'</w:t></w:r></w:p>';
+}
+var D_BREAK='<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+function dImage(rid,id,cx,cy){
+  return '<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/><wp:docPr id="'+id+'" name="Picture '+id+'"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="'+id+'" name="page'+id+'.jpeg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="'+rid+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+}
+async function buildDocx(body,media){
+  var Z=need('JSZip'),z=new Z(),H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  z.file('[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>');
+  z.file('_rels/.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  var rels='<Relationship Id="rIdS" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>';
+  media.forEach(function(m,i){rels+='<Relationship Id="rIdM'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(i+1)+'.jpeg"/>';z.file('word/media/image'+(i+1)+'.jpeg',m)});
+  z.file('word/_rels/document.xml.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rels+'</Relationships>');
+  z.file('word/styles.xml',H+'<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Tahoma"/><w:sz w:val="22"/><w:szCs w:val="28"/><w:lang w:val="en-US" w:bidi="th-TH"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>');
+  z.file('word/document.xml',H+'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>'+body+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>');
+  return z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',compression:'DEFLATE'});
+}
+
+/* ---------- translation PDF (drawn text, any script) ---------- */
+async function textToPdf(pages,set,chk){
+  var P=need('PDFLib');
+  try{await document.fonts.load('400 24px "IBM Plex Sans Thai"')}catch(e){}
+  var W=1190,H=1684,M=112,fs=24,lh=Math.round(fs*1.65);
+  var font=fs+'px "IBM Plex Sans Thai","Noto Sans Thai","Noto Sans CJK SC","Noto Sans JP","Noto Sans KR","Malgun Gothic","Yu Gothic","Microsoft YaHei",sans-serif';
+  var seg=(typeof Intl!=='undefined'&&Intl.Segmenter)?new Intl.Segmenter(undefined,{granularity:'word'}):null;
+  var doc=await P.PDFDocument.create(),c=null,x=null,y=0;
+  async function flush(){
+    if(!c)return;
+    var b=await toBlob(c,'image/jpeg',0.9),img=await doc.embedJpg(await b.arrayBuffer());
+    var pg=doc.addPage([595.28,841.89]);pg.drawImage(img,{x:0,y:0,width:595.28,height:841.89});
+    freeCanvas(c);c=null;
+  }
+  function fresh(){c=mkCanvas(W,H);x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#111';x.font=font;x.textBaseline='top';y=M}
+  function wrap(text){
+    var toks=seg?Array.from(seg.segment(text),function(s){return s.segment}):text.split(/(\s+)/),lines=[],line='',maxW=W-2*M;
+    toks.forEach(function(t){
+      if(x.measureText(line+t).width<=maxW){line+=t;return}
+      if(line.trim())lines.push(line.replace(/\s+$/,''));
+      line=t.replace(/^\s+/,'');
+      while(x.measureText(line).width>maxW){
+        var k=line.length;while(k>1&&x.measureText(line.slice(0,k)).width>maxW)k--;
+        lines.push(line.slice(0,k));line=line.slice(k);
+      }
+    });
+    if(line.trim())lines.push(line);
+    return lines;
+  }
+  for(var p=0;p<pages.length;p++){
+    chk();
+    if(c&&p>0)await flush();
+    if(!c)fresh();
+    for(var k=0;k<pages[p].length;k++){
+      var ls=wrap(pages[p][k]);
+      for(var j=0;j<ls.length;j++){
+        if(y+lh>H-M){await flush();fresh()}
+        x.fillText(ls[j],M,y);y+=lh;
+      }
+      y+=Math.round(lh*0.55);
+    }
+    set(0.9+0.08*((p+1)/pages.length),'สร้างไฟล์ PDF หน้า '+(p+1));
+  }
+  await flush();
+  return new Blob([await doc.save()],{type:'application/pdf'});
+}
+
+/* ---------- tool definitions ---------- */
+var IMG_ACCEPT='image/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif';
+var PW={id:'pw',label:'รหัสผ่านไฟล์ (ถ้ามี)',type:'password',def:'',hint:'ใส่เฉพาะไฟล์ที่ต้องใช้รหัสผ่านเพื่อเปิด'};
+var LANGS=[['Thai','ไทย'],['English','อังกฤษ'],['Simplified Chinese','จีน (ตัวย่อ)'],['Traditional Chinese','จีน (ตัวเต็ม)'],['Japanese','ญี่ปุ่น'],['Korean','เกาหลี'],['French','ฝรั่งเศส'],['German','เยอรมัน'],['Spanish','สเปน'],['Indonesian','อินโดนีเซีย'],['Vietnamese','เวียดนาม']];
+var DPI=[['1.5','กระชับ (1.5x)'],['2','มาตรฐาน (2x)'],['3','คมชัด (3x)']];
+var TOOLS=[
+{id:'img-convert',group:'รูปภาพ',nav:'แปลงรูปภาพ',hint:'JPG PNG WebP',kind:'image',multi:true,
+ title:'แปลงรูปภาพ JPG / PNG / WebP',desc:'เปลี่ยนรูปแบบไฟล์ภาพได้หลายไฟล์พร้อมกัน เลือกคุณภาพของ JPG และ WebP ได้',
+ from:['.jpg','.png','.webp','.gif','.bmp'],to:['.jpg','.png','.webp'],cta:'แปลงรูปภาพ',
+ options:[
+  {id:'fmt',label:'แปลงเป็น',type:'select',def:'jpeg',choices:[['jpeg','JPG'],['png','PNG'],['webp','WebP']]},
+  {id:'q',label:'คุณภาพ',type:'range',min:30,max:100,step:1,def:92,unit:'%',when:function(v){return v.fmt!=='png'}}
+ ],
+ note:'ภาพโปร่งใสที่แปลงเป็น JPG จะได้พื้นหลังสีขาว',
+ run:async function(c){
+  for(var i=0;i<c.files.length;i++){
+   c.chk();var f=c.files[i];c.set(i/c.files.length,'กำลังแปลง '+f.name);
+   try{
+    var src=await loadImage(f),type=pickType(f,c.v.fmt),cv=drawImg(src,1,type==='image/jpeg'),b=await encode(cv,type,c.v.q/100);freeCanvas(cv);
+    c.add({name:baseName(f.name)+'.'+EXT[type],blob:b,note:fmtB(f.size)+' → '+fmtB(b.size)});
+   }catch(e){c.fail(f.name,e)}
+  }
+ }},
+{id:'img-pdf',group:'รูปภาพ',nav:'รูปภาพเป็น PDF',hint:'JPG PNG → PDF',kind:'image',multi:true,ordered:true,
+ title:'รวมรูปภาพเป็นไฟล์ PDF',desc:'นำภาพหลายภาพมาเรียงเป็น PDF ไฟล์เดียว จัดลำดับด้วยปุ่มลูกศรได้',
+ from:['.jpg','.png','.webp'],to:['.pdf'],cta:'สร้าง PDF',
+ options:[
+  {id:'size',label:'ขนาดหน้า',type:'select',def:'fit',choices:[['fit','เท่ากับขนาดภาพ'],['a4p','A4 แนวตั้ง'],['a4l','A4 แนวนอน']]},
+  {id:'margin',label:'ขอบกระดาษ',type:'select',def:'0',choices:[['0','ไม่มีขอบ'],['28','แคบ (10 มม.)'],['57','กว้าง (20 มม.)']],when:function(v){return v.size!=='fit'}}
+ ],
+ run:async function(c){
+  var P=need('PDFLib'),doc=await P.PDFDocument.create();
+  for(var i=0;i<c.files.length;i++){
+   c.chk();var f=c.files[i];c.set(i/c.files.length,'กำลังใส่ภาพ '+f.name);
+   var src=await loadImage(f),d=dims(src),png=(f.type==='image/png'||f.type==='image/webp'||f.type==='image/gif');
+   var cv=drawImg(src,1,!png),blob=await toBlob(cv,png?'image/png':'image/jpeg',0.92);freeCanvas(cv);
+   var emb=png?await doc.embedPng(await blob.arrayBuffer()):await doc.embedJpg(await blob.arrayBuffer());
+   var pw,ph,x=0,y=0,w,h;
+   if(c.v.size==='fit'){pw=d[0]*0.75;ph=d[1]*0.75;w=pw;h=ph}
+   else{
+    var land=c.v.size==='a4l';pw=land?841.89:595.28;ph=land?595.28:841.89;var m=+c.v.margin,aw=pw-2*m,ah=ph-2*m,s=Math.min(aw/d[0],ah/d[1]);
+    w=d[0]*s;h=d[1]*s;x=(pw-w)/2;y=(ph-h)/2;
+   }
+   var pg=doc.addPage([pw,ph]);pg.drawImage(emb,{x:x,y:y,width:w,height:h});
+  }
+  c.set(0.97,'บันทึกไฟล์');
+  c.add({name:(c.files.length===1?baseName(c.files[0].name):'รวมรูปภาพ')+'.pdf',blob:new Blob([await doc.save()],{type:'application/pdf'}),note:c.files.length+' หน้า'});
+ }},
+{id:'img-compress',group:'รูปภาพ',nav:'บีบอัดรูปภาพ',hint:'กำหนดเอง',kind:'image',multi:true,
+ title:'บีบอัดรูปภาพแบบกำหนดเอง',desc:'ลดขนาดไฟล์ภาพตามคุณภาพ ขนาดภาพ หรือขนาดไฟล์สูงสุดที่ต้องการ',
+ from:['.jpg','.png','.webp'],to:['.jpg','.png','.webp'],cta:'บีบอัด',
+ options:[
+  {id:'mode',label:'วิธีกำหนด',type:'select',def:'q',choices:[['q','กำหนดคุณภาพ'],['t','กำหนดขนาดไฟล์สูงสุด']]},
+  {id:'q',label:'คุณภาพ',type:'range',min:10,max:100,step:1,def:75,unit:'%',when:function(v){return v.mode==='q'&&v.fmt!=='png'}},
+  {id:'kb',label:'ขนาดสูงสุดต่อไฟล์ (KB)',type:'number',def:300,min:5,max:20000,when:function(v){return v.mode==='t'}},
+  {id:'fmt',label:'รูปแบบผลลัพธ์',type:'select',def:'auto',choices:[['auto','เหมือนไฟล์เดิม'],['jpeg','JPG'],['webp','WebP'],['png','PNG']]},
+  {id:'side',label:'ด้านที่ยาวที่สุดไม่เกิน (px)',type:'number',def:0,min:0,max:20000,hint:'ใส่ 0 หากไม่ต้องการย่อขนาดภาพ'}
+ ],
+ note:'PNG บีบอัดแบบไม่สูญเสียคุณภาพ จึงลดขนาดได้ด้วยการย่อภาพเท่านั้น หากต้องการให้เล็กลงมาก ให้เลือก JPG หรือ WebP',
+ run:async function(c){
+  var tot0=0,tot1=0;
+  for(var i=0;i<c.files.length;i++){
+   c.chk();var f=c.files[i];c.set(i/c.files.length,'กำลังบีบอัด '+f.name);
+   try{
+    var src=await loadImage(f),type=pickType(f,c.v.fmt);
+    var r=await compressOne(src,{type:type,q:c.v.q/100,maxSide:+c.v.side||0,targetKB:c.v.mode==='t'?(+c.v.kb||300):0});
+    var ratio=Math.round((1-r.blob.size/f.size)*100),note=fmtB(f.size)+' → '+fmtB(r.blob.size)+(ratio>0?' (ลดลง '+ratio+'%)':' (ใหญ่กว่าเดิม)'),cls=ratio>0?'g':'w';
+    if(c.v.mode==='t'&&!r.hit){note+=' · ลดถึงเป้าหมายไม่ได้';cls='w'}
+    tot0+=f.size;tot1+=Math.min(f.size,r.blob.size);
+    c.add({name:baseName(f.name)+'-small.'+EXT[type],blob:r.blob,note:note,cls:cls});
+   }catch(e){c.fail(f.name,e)}
+  }
+ }},
+{id:'pdf-jpg',group:'PDF เป็นไฟล์อื่น',nav:'PDF เป็น JPG',hint:'PDF → JPG PNG',kind:'pdf',multi:true,
+ title:'แปลง PDF เป็นรูปภาพ JPG',desc:'แยกแต่ละหน้าของ PDF เป็นไฟล์ภาพ เลือกความคมชัดและช่วงหน้าได้',
+ from:['.pdf'],to:['.jpg','.png'],cta:'แปลงเป็นรูปภาพ',
+ options:[
+  {id:'fmt',label:'รูปแบบภาพ',type:'select',def:'jpeg',choices:[['jpeg','JPG'],['png','PNG']]},
+  {id:'scale',label:'ความคมชัด',type:'select',def:'2',choices:DPI},
+  {id:'range',label:'หน้าที่ต้องการ',type:'text',def:'',hint:'เว้นว่างเพื่อเอาทุกหน้า หรือพิมพ์ เช่น 1-3,5'},
+  PW],
+ run:async function(c){
+  for(var i=0;i<c.files.length;i++){
+   var f=c.files[i];
+   try{
+    var pdf=await openPdf(f,c.v.pw),pages=parseRange(c.v.range,pdf.numPages),type=c.v.fmt==='png'?'image/png':'image/jpeg';
+    for(var k=0;k<pages.length;k++){
+     c.chk();c.set((i+k/pages.length)/c.files.length,f.name+' หน้า '+pages[k]);
+     var pg=await pdf.getPage(pages[k]),cv=await renderPage(pg,+c.v.scale),b=await toBlob(cv,type,0.92);freeCanvas(cv);
+     c.add({name:baseName(f.name)+'-หน้า'+pages[k]+'.'+EXT[type],blob:b,note:fmtB(b.size)});
+    }
+   }catch(e){c.fail(f.name,e)}
+  }
+ }},
+{id:'pdf-docx',group:'PDF เป็นไฟล์อื่น',nav:'PDF เป็น Word',hint:'PDF → DOCX',kind:'pdf',multi:true,
+ title:'แปลง PDF เป็น Word (.docx)',desc:'ดึงข้อความจาก PDF มาจัดเป็นย่อหน้าในไฟล์ Word หน้าที่เป็นภาพสแกนจะถูกใส่เป็นรูปภาพ',
+ from:['.pdf'],to:['.docx'],cta:'แปลงเป็น Word',
+ options:[PW],
+ note:'เหมาะกับเอกสารที่เป็นข้อความ ตารางและการจัดหน้าซับซ้อนอาจไม่เหมือนต้นฉบับ',
+ run:async function(c){
+  for(var i=0;i<c.files.length;i++){
+   var f=c.files[i];
+   try{
+    var pdf=await openPdf(f,c.v.pw),body='',media=[],scanned=0;
+    for(var p=1;p<=pdf.numPages;p++){
+     c.chk();c.set((i+p/pdf.numPages)/c.files.length,f.name+' หน้า '+p+' จาก '+pdf.numPages);
+     var pg=await pdf.getPage(p),pt=await pageText(pg);
+     if(pt.chars<15){
+      scanned++;var cv=await renderPage(pg,1.6),jb=await toBlob(cv,'image/jpeg',0.85),ar=cv.height/cv.width;freeCanvas(cv);
+      media.push(new Uint8Array(await jb.arrayBuffer()));
+      var cx=6000000;body+=dImage('rIdM'+media.length,media.length,cx,Math.round(cx*Math.min(ar,1.4)));
+     }else{
+      toParas(pt).forEach(function(q){body+=dPara(q.text,Math.max(16,Math.min(72,Math.round(q.size*2))))});
+     }
+     if(p<pdf.numPages)body+=D_BREAK;
+    }
+    var blob=await buildDocx(body,media);
+    c.add({name:baseName(f.name)+'.docx',blob:blob,note:pdf.numPages+' หน้า · '+fmtB(blob.size)+(scanned?' · '+scanned+' หน้าเป็นภาพสแกน ใส่เป็นรูปภาพ':''),cls:scanned?'w':''});
+   }catch(e){c.fail(f.name,e)}
+  }
+ }},
+{id:'pdf-pptx',group:'PDF เป็นไฟล์อื่น',nav:'PDF เป็น PowerPoint',hint:'PDF → PPTX',kind:'pdf',multi:true,
+ title:'แปลง PDF เป็น PowerPoint (.pptx)',desc:'หนึ่งหน้า PDF ต่อหนึ่งสไลด์ เลือกได้ว่าจะให้เหมือนต้นฉบับทุกจุด หรือให้แก้ไขข้อความได้',
+ from:['.pdf'],to:['.pptx'],cta:'แปลงเป็น PowerPoint',
+ options:[
+  {id:'mode',label:'รูปแบบสไลด์',type:'select',def:'img',choices:[['img','ภาพเหมือนต้นฉบับ (แก้ข้อความไม่ได้)'],['txt','ข้อความแก้ไขได้ (จัดวางโดยประมาณ)']]},
+  {id:'scale',label:'ความคมชัดของภาพ',type:'select',def:'2',choices:DPI,when:function(v){return v.mode==='img'}},
+  PW],
+ run:async function(c){
+  var Pp=need('PptxGenJS');
+  for(var i=0;i<c.files.length;i++){
+   var f=c.files[i];
+   try{
+    var pdf=await openPdf(f,c.v.pw),first=await pdf.getPage(1),v1=first.getViewport({scale:1});
+    var W=13.333,H=W*v1.height/v1.width,pptx=new Pp();pptx.defineLayout({name:'PDFPAGE',width:W,height:H});pptx.layout='PDFPAGE';
+    for(var p=1;p<=pdf.numPages;p++){
+     c.chk();c.set((i+p/pdf.numPages)/c.files.length,f.name+' หน้า '+p+' จาก '+pdf.numPages);
+     var pg=await pdf.getPage(p),vp=pg.getViewport({scale:1}),k=Math.min(W/vp.width,H/vp.height),ox=(W-vp.width*k)/2,oy=(H-vp.height*k)/2,sl=pptx.addSlide(),done=false;
+     if(c.v.mode==='txt'){
+      var pt=await pageText(pg);
+      if(pt.chars>=15){
+       done=true;
+       pt.lines.forEach(function(l){
+        if(!l.text)return;
+        sl.addText(l.text,{x:ox+l.x*k,y:oy+(vp.height-l.y-l.h*0.85)*k,w:(l.right-l.x)*k+0.5,h:l.h*1.3*k,fontSize:Math.max(6,Math.round(l.h*k*72)),fontFace:'Tahoma',margin:0,valign:'top',wrap:false,color:'111111'});
+       });
+      }
+     }
+     if(!done){
+      var cv=await renderPage(pg,+c.v.scale||2),url=cv.toDataURL('image/jpeg',0.9);freeCanvas(cv);
+      sl.addImage({data:url.slice(5),x:ox,y:oy,w:vp.width*k,h:vp.height*k});
+     }
+    }
+    c.set(0.95,'บันทึกไฟล์ '+f.name);
+    var blob=await pptx.write({outputType:'blob'});
+    c.add({name:baseName(f.name)+'.pptx',blob:blob,note:pdf.numPages+' สไลด์ · '+fmtB(blob.size)});
+   }catch(e){c.fail(f.name,e)}
+  }
+ }},
+{id:'pdf-xlsx',group:'PDF เป็นไฟล์อื่น',nav:'PDF เป็น Excel',hint:'PDF → XLSX',kind:'pdf',multi:true,
+ title:'แปลง PDF เป็น Excel (.xlsx)',desc:'ดึงข้อความและตารางจาก PDF มาจัดเป็นแถวและคอลัมน์ ตัวเลขจะถูกแปลงเป็นค่าตัวเลขให้คำนวณต่อได้',
+ from:['.pdf'],to:['.xlsx'],cta:'แปลงเป็น Excel',
+ options:[
+  {id:'mode',label:'การจัดชีต',type:'select',def:'each',choices:[['each','หนึ่งหน้า ต่อหนึ่งชีต'],['one','รวมทุกหน้าในชีตเดียว']]},
+  PW],
+ note:'ใช้ได้ดีกับ PDF ที่สร้างจากโปรแกรม (ไม่ใช่ภาพสแกน) การแบ่งคอลัมน์อิงจากตำแหน่งข้อความ จึงควรตรวจสอบผลอีกครั้ง',
+ run:async function(c){
+  var X=need('XLSX');
+  function val(s){if(/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)||/^-?(?!0\d)\d+(\.\d+)?$/.test(s))return Number(s.replace(/,/g,''));return s}
+  function rowsOf(pt){
+   var per=pt.lines.map(function(l){
+    var cells=[],cur=null;
+    l.items.forEach(function(it){
+     if(cur&&it.x-(cur.x+cur.w)<=l.h*0.9){cur.s+=(it.x-(cur.x+cur.w)>l.h*0.18?' ':'')+it.s;cur.w=it.x+it.w-cur.x}
+     else{cur={s:it.s,x:it.x,w:it.w};cells.push(cur)}
+    });
+    return cells;
+   });
+   var xs=Array.from(new Set([].concat.apply([],per).map(function(q){return Math.round(q.x)}))).sort(function(a,b){return a-b}),cols=[];
+   xs.forEach(function(x){if(!cols.length||x-cols[cols.length-1].max>8)cols.push({min:x,max:x});else cols[cols.length-1].max=x});
+   function colOf(x){var best=0,bd=1e9;cols.forEach(function(q,i){var d=Math.abs(x-(q.min+q.max)/2);if(d<bd){bd=d;best=i}});return best}
+   return per.map(function(cells){var row=[];cells.forEach(function(q){var i=colOf(q.x);while(row[i]!==undefined)i++;row[i]=val(q.s.trim())});return row});
+  }
+  function widths(rows){var w=[];rows.forEach(function(r){for(var i=0;i<r.length;i++){if(r[i]===undefined)continue;var n=String(r[i]).length;w[i]=Math.max(w[i]||8,Math.min(60,n+2))}});return w.map(function(x){return {wch:x||8}})}
+  for(var i=0;i<c.files.length;i++){
+   var f=c.files[i];
+   try{
+    var pdf=await openPdf(f,c.v.pw),wb=X.utils.book_new(),all=[],empty=0;
+    for(var p=1;p<=pdf.numPages;p++){
+     c.chk();c.set((i+p/pdf.numPages)/c.files.length,f.name+' หน้า '+p+' จาก '+pdf.numPages);
+     var pt=await pageText(await pdf.getPage(p)),rows=rowsOf(pt);
+     if(pt.chars<15){empty++;rows=[['(หน้านี้ไม่มีข้อความ อาจเป็นภาพสแกน)']]}
+     if(c.v.mode==='one'){if(all.length)all.push([]);all.push(['— หน้า '+p+' —']);all=all.concat(rows)}
+     else{var ws=X.utils.aoa_to_sheet(rows);ws['!cols']=widths(rows);X.utils.book_append_sheet(wb,ws,'หน้า '+p)}
+    }
+    if(c.v.mode==='one'){var w1=X.utils.aoa_to_sheet(all);w1['!cols']=widths(all);X.utils.book_append_sheet(wb,w1,'ทุกหน้า')}
+    var blob=new Blob([X.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    c.add({name:baseName(f.name)+'.xlsx',blob:blob,note:pdf.numPages+' หน้า · '+fmtB(blob.size)+(empty?' · '+empty+' หน้าไม่มีข้อความ':''),cls:empty?'w':''});
+   }catch(e){c.fail(f.name,e)}
+  }
+ }},
+{id:'pdf-translate',group:'จัดการ PDF',nav:'แปลภาษา PDF',hint:'PDF → PDF DOCX TXT',kind:'pdf',multi:false,needSample:true,
+ title:'แปลภาษาไฟล์ PDF',desc:'อ่านข้อความจาก PDF แล้วให้ Claude แปลเป็นภาษาที่เลือก ได้ไฟล์ PDF, Word และข้อความล้วน',
+ from:['.pdf'],to:['.pdf','.docx','.txt'],cta:'แปลไฟล์',
+ options:[
+  {id:'lang',label:'แปลเป็นภาษา',type:'select',def:'Thai',choices:LANGS},
+  {id:'range',label:'หน้าที่ต้องการแปล',type:'text',def:'',hint:'เว้นว่างเพื่อแปลทุกหน้า หรือพิมพ์ เช่น 1-5'},
+  PW],
+ note:'ข้อความจากไฟล์จะถูกส่งให้ Claude เพื่อแปล และนับรวมกับโควตาการใช้ Claude ของคุณ ครั้งแรกระบบจะขออนุญาตก่อน PDF ที่ได้จะเป็นข้อความล้วนจัดหน้าใหม่ ไม่คงรูปแบบเดิม',
+ warn:true,
+ run:async function(c){
+  var sm=await smP;
+  if(!sm)throw new Error('เครื่องมือนี้ใช้ได้เมื่อเปิดหน้านี้ผ่าน Claude เท่านั้น (ต้องใช้ Claude ช่วยแปล)');
+  var f=c.files[0],pdf=await openPdf(f,c.v.pw),pages=parseRange(c.v.range,pdf.numPages),lang=c.v.lang,langTh=(LANGS.filter(function(l){return l[0]===lang})[0]||[])[1]||lang;
+  var items=[],per=[],chars=0;
+  for(var k=0;k<pages.length;k++){
+   c.chk();c.set(0.05*k/pages.length,'อ่านข้อความหน้า '+pages[k]);
+   var pt=await pageText(await pdf.getPage(pages[k])),ps=toParas(pt);chars+=pt.chars;
+   per.push(ps.map(function(q){var it={i:items.length,text:q.text,pg:k};items.push(it);return it}));
+  }
+  if(chars<15)throw new Error('ไม่พบข้อความในไฟล์นี้ (อาจเป็นภาพสแกน) เครื่องมือนี้ยังอ่านข้อความจากภาพไม่ได้');
+  var batches=[],cur=[],len=0;
+  items.forEach(function(it){if(cur.length&&(len+it.text.length>4500||cur.length>=50)){batches.push(cur);cur=[];len=0}cur.push(it);len+=it.text.length});
+  if(cur.length)batches.push(cur);
+  var miss=0;
+  for(var b=0;b<batches.length;b++){
+   c.chk();c.set(0.05+0.8*b/batches.length,'กำลังแปล ส่วนที่ '+(b+1)+' จาก '+batches.length);
+   var prompt='Translate the "t" value of every object in the JSON array below into '+lang+'. Keep numbers, URLs, names, and symbols as they are. Reply with only a JSON array of objects {"i":number,"t":string}, one per input object, using the same "i" values.\n\n'+JSON.stringify(batches[b].map(function(x){return {i:x.i,t:x.text}}));
+   var out;
+   try{out=await sm.json(prompt,{signal:c.signal})}
+   catch(e){
+    if(e&&e.code==='cancelled')throw Object.assign(new Error('ยกเลิกแล้ว'),{cancelled:true});
+    var msg={not_granted:'คุณไม่ได้อนุญาตให้ใช้ Claude แปลไฟล์',rate_limited:'ใช้ Claude ถี่เกินไปหรือถึงขีดจำกัดการใช้งานแล้ว ลองใหม่ภายหลัง',session_expired:'เซสชันหมดอายุ กรุณาเข้าสู่ระบบ Claude ใหม่',sampling_disabled:'บัญชีนี้ใช้ Claude ในหน้านี้ไม่ได้',invalid_json:'Claude ตอบกลับในรูปแบบที่อ่านไม่ได้ ลองใหม่อีกครั้ง',prompt_too_large:'ข้อความยาวเกินไป ลองเลือกช่วงหน้าที่สั้นลง'}[e&&e.code];
+    throw new Error(msg||'แปลไม่สำเร็จ ลองใหม่อีกครั้ง');
+   }
+   var map={};(Array.isArray(out)?out:[]).forEach(function(r){if(r&&typeof r.t==='string')map[r.i]=r.t});
+   batches[b].forEach(function(it){if(map[it.i]===undefined){miss++;it.out=it.text}else it.out=map[it.i]});
+  }
+  var pagesOut=per.map(function(ps){return ps.map(function(it){return it.out})});
+  var base=baseName(f.name)+'-'+lang.toLowerCase().replace(/\s+/g,'-');
+  c.set(0.88,'สร้างไฟล์ผลลัพธ์');
+  var pdfBlob=await textToPdf(pagesOut,c.set,c.chk);
+  var body='';pagesOut.forEach(function(ps,pi){ps.forEach(function(t){body+=dPara(t)});if(pi<pagesOut.length-1)body+=D_BREAK});
+  var docx=await buildDocx(body,[]);
+  var txt=new Blob([pagesOut.map(function(ps,pi){return '--- หน้า '+pages[pi]+' ---\n\n'+ps.join('\n\n')}).join('\n\n')],{type:'text/plain'});
+  var n=miss?' · '+miss+' ย่อหน้าแปลไม่ได้ คงข้อความเดิมไว้':'';
+  c.add({name:base+'.pdf',blob:pdfBlob,note:'แปลเป็น'+langTh+' · '+pages.length+' หน้าต้นฉบับ'+n,cls:miss?'w':''});
+  c.add({name:base+'.docx',blob:docx,note:'ไฟล์ Word แก้ไขต่อได้'});
+  c.add({name:base+'.txt',blob:txt,note:'ข้อความล้วน'});
+ }},
+{id:'pdf-unlock',group:'จัดการ PDF',nav:'ปลดล็อก PDF',hint:'ลบรหัสผ่าน',kind:'pdf',multi:true,
+ title:'ปลดล็อกไฟล์ PDF',desc:'ลบรหัสผ่านและข้อจำกัดการพิมพ์หรือคัดลอกออกจากไฟล์ PDF ของคุณ โดยต้องรู้รหัสผ่านสำหรับเปิดไฟล์',
+ from:['.pdf'],to:['.pdf'],cta:'ปลดล็อก',
+ options:[
+  {id:'pw',label:'รหัสผ่านเปิดไฟล์',type:'password',def:'',hint:'ปล่อยว่างหากไฟล์เปิดได้ปกติแต่ถูกจำกัดสิทธิ์'},
+  {id:'scale',label:'ความคมชัด',type:'select',def:'2',choices:DPI}],
+ note:'ใช้กับไฟล์ที่คุณมีสิทธิ์เท่านั้น เครื่องมือนี้ไม่เดารหัสผ่าน ไฟล์ที่ได้สร้างจากภาพของแต่ละหน้า จึงพิมพ์และคัดลอกภาพได้ แต่เลือกข้อความไม่ได้',
+ warn:true,
+ run:async function(c){
+  var P=need('PDFLib');
+  for(var i=0;i<c.files.length;i++){
+   var f=c.files[i];
+   try{
+    var pgs=await pdfPagesJpeg(f,c.v.pw,+c.v.scale,0.92,function(fr,m){c.set((i+fr)/c.files.length,f.name+' · '+m)},c.chk),doc=await P.PDFDocument.create();
+    for(var k=0;k<pgs.length;k++){var img=await doc.embedJpg(pgs[k].jpg),pg=doc.addPage([pgs[k].w,pgs[k].h]);pg.drawImage(img,{x:0,y:0,width:pgs[k].w,height:pgs[k].h})}
+    var blob=new Blob([await doc.save()],{type:'application/pdf'});
+    c.add({name:baseName(f.name)+'-unlocked.pdf',blob:blob,note:pgs.length+' หน้า · '+fmtB(blob.size)});
+   }catch(e){c.fail(f.name,e)}
+  }
+ }},
+{id:'pdf-protect',group:'จัดการ PDF',nav:'ใส่รหัสผ่าน PDF',hint:'เข้ารหัส PDF',kind:'pdf',multi:true,
+ title:'ใส่รหัสผ่านให้ไฟล์ PDF',desc:'ตั้งรหัสผ่านสำหรับเปิดไฟล์ และเลือกได้ว่าจะอนุญาตให้พิมพ์หรือคัดลอกหรือไม่',
+ from:['.pdf'],to:['.pdf'],cta:'ใส่รหัสผ่าน',
+ options:[
+  {id:'pw1',label:'รหัสผ่านใหม่',type:'password',def:''},
+  {id:'pw2',label:'ยืนยันรหัสผ่าน',type:'password',def:''},
+  {id:'src',label:'รหัสผ่านเดิมของไฟล์ (ถ้ามี)',type:'password',def:''},
+  {id:'scale',label:'ความคมชัด',type:'select',def:'2',choices:DPI},
+  {id:'allowPrint',label:'อนุญาตให้พิมพ์',type:'checkbox',def:true},
+  {id:'allowCopy',label:'อนุญาตให้คัดลอก',type:'checkbox',def:false}],
+ note:'จดรหัสผ่านไว้ เพราะกู้คืนให้ไม่ได้ ไฟล์ที่ได้ใช้การเข้ารหัสมาตรฐานแบบพื้นฐานของ PDF และสร้างจากภาพของแต่ละหน้า จึงเลือกข้อความไม่ได้ หากเป็นเอกสารที่ต้องปกป้องระดับสูง ควรใช้โปรแกรมเข้ารหัสเฉพาะทาง',
+ warn:true,
+ validate:function(v){if(!v.pw1)return 'ตั้งรหัสผ่านก่อน';if(v.pw1.length<4)return 'รหัสผ่านควรยาวอย่างน้อย 4 ตัวอักษร';if(v.pw1!==v.pw2)return 'รหัสผ่านทั้งสองช่องไม่ตรงกัน'},
+ run:async function(c){
+  var J=need('jspdf').jsPDF;
+  for(var i=0;i<c.files.length;i++){
+   var f=c.files[i];
+   try{
+    var pgs=await pdfPagesJpeg(f,c.v.src,+c.v.scale,0.9,function(fr,m){c.set((i+fr)/c.files.length,f.name+' · '+m)},c.chk);
+    var perms=[];if(c.v.allowPrint)perms.push('print');if(c.v.allowCopy)perms.push('copy');
+    var rnd=new Uint8Array(12);crypto.getRandomValues(rnd);var owner=Array.from(rnd,function(b){return b.toString(16).padStart(2,'0')}).join('');
+    var doc=null;
+    for(var k=0;k<pgs.length;k++){
+     var w=pgs[k].w,h=pgs[k].h,o=w>h?'l':'p';
+     if(!doc)doc=new J({unit:'pt',format:[w,h],orientation:o,compress:true,encryption:{userPassword:c.v.pw1,ownerPassword:owner,userPermissions:perms}});
+     else doc.addPage([w,h],o);
+     doc.addImage(pgs[k].jpg,'JPEG',0,0,w,h);
+    }
+    var blob=doc.output('blob');
+    c.add({name:baseName(f.name)+'-protected.pdf',blob:blob,note:pgs.length+' หน้า · '+fmtB(blob.size)});
+   }catch(e){c.fail(f.name,e)}
+  }
+ }}
+];
+var BYID={};TOOLS.forEach(function(t){BYID[t.id]=t});
+
+/* ---------- UI state ---------- */
+var cur=TOOLS[0],files=[],results=[],urls=[],saved={},ctl=null,busy=false;
+var els={nav:$('#nav'),drop:$('#drop'),picker:$('#picker'),flist:$('#flist'),opts:$('#opts'),note:$('#note'),run:$('#run'),stop:$('#stop'),clear:$('#clear'),prog:$('#prog'),barI:$('#barI'),progT:$('#progT'),resCard:$('#resCard'),rl:$('#rl'),ftr:$('#ftr'),resErr:$('#resErr'),resH:$('#resH')};
+
+function renderNav(){
+  els.nav.innerHTML='';var g=null;
+  TOOLS.forEach(function(t){
+    if(t.group!==g){g=t.group;var h=document.createElement('div');h.className='grp';h.textContent=g;els.nav.appendChild(h)}
+    var b=document.createElement('button');b.type='button';b.className='nb';b.dataset.id=t.id;
+    b.innerHTML='<strong></strong><small></small>';b.firstChild.textContent=t.nav;b.lastChild.textContent=t.hint;
+    b.setAttribute('aria-current',t.id===cur.id?'true':'false');
+    b.addEventListener('click',function(){if(busy)return;select(t.id)});
+    els.nav.appendChild(b);
+  });
+}
+function select(id){
+  if(busy)return;
+  cur=BYID[id]||TOOLS[0];files=[];clearResults();
+  $('#tTitle').textContent=cur.title;$('#tDesc').textContent=cur.desc;
+  var f=$('#tFmt');f.innerHTML='';
+  function chips(a){a.forEach(function(x){var s=document.createElement('span');s.className='chip';s.textContent=x;f.appendChild(s)})}
+  chips(cur.from);var ar=document.createElement('span');ar.className='arrow';ar.textContent='→';f.appendChild(ar);chips(cur.to);
+  els.picker.accept=cur.kind==='pdf'?'application/pdf,.pdf':IMG_ACCEPT;els.picker.multiple=!!cur.multi;
+  $('#dropS').textContent=(cur.kind==='pdf'?'รับไฟล์ .pdf':'รับไฟล์ภาพ .jpg .png .webp .gif .bmp')+(cur.multi?' เลือกได้หลายไฟล์':' ครั้งละ 1 ไฟล์');
+  els.run.textContent=cur.cta;
+  renderOpts();renderFiles();updateNote();
+  Array.prototype.forEach.call(els.nav.querySelectorAll('.nb'),function(b){b.setAttribute('aria-current',b.dataset.id===cur.id?'true':'false')});
+}
+function updateNote(){
+  var n=cur.note||'';
+  if(cur.needSample&&!SAMPLE&&SAMPLE!==undefined){}
+  els.note.textContent=n;els.note.classList.toggle('warn',!!cur.warn);
+}
+function vals(){
+  var v={},s=saved[cur.id]||{};
+  (cur.options||[]).forEach(function(o){
+    var e=document.getElementById('o_'+o.id);
+    if(!e){v[o.id]=s[o.id]!==undefined?s[o.id]:o.def;return}
+    v[o.id]=o.type==='checkbox'?e.checked:o.type==='range'?Number(e.value):e.value;
+  });
+  return v;
+}
+function renderOpts(){
+  els.opts.innerHTML='';var sv=saved[cur.id]=saved[cur.id]||{};
+  (cur.options||[]).forEach(function(o){
+    var w=document.createElement('div');w.className='opt'+(o.type==='checkbox'?' ck':'');w.dataset.opt=o.id;
+    var val=sv[o.id]!==undefined?sv[o.id]:o.def,id='o_'+o.id,inp;
+    function lab(){var l=document.createElement('label');l.htmlFor=id;l.textContent=o.label;return l}
+    if(o.type==='select'){
+      w.appendChild(lab());inp=document.createElement('select');
+      o.choices.forEach(function(c){var op=document.createElement('option');op.value=c[0];op.textContent=c[1];inp.appendChild(op)});inp.value=val;
+    }else if(o.type==='range'){
+      var l=lab(),rv=document.createElement('span');rv.className='rv';l.appendChild(document.createTextNode(' '));l.appendChild(rv);w.appendChild(l);
+      inp=document.createElement('input');inp.type='range';inp.min=o.min;inp.max=o.max;inp.step=o.step||1;inp.value=val;
+      var up=function(){rv.textContent=inp.value+(o.unit||'')};up();inp.addEventListener('input',up);
+    }else if(o.type==='checkbox'){
+      inp=document.createElement('input');inp.type='checkbox';inp.checked=!!val;w.appendChild(inp);w.appendChild(lab());
+    }else{
+      w.appendChild(lab());inp=document.createElement('input');inp.type=o.type;inp.value=val;
+      if(o.type==='number'){inp.min=o.min;inp.max=o.max;inp.inputMode='numeric'}
+      if(o.type==='password')inp.autocomplete='new-password';
+    }
+    inp.id=id;
+    var ev=o.type==='checkbox'||o.type==='select'?'change':'input';
+    inp.addEventListener(ev,function(){sv[o.id]=o.type==='checkbox'?inp.checked:o.type==='range'?Number(inp.value):inp.value;applyWhen()});
+    if(o.type!=='checkbox')w.appendChild(inp);
+    if(o.hint){var h=document.createElement('div');h.className='hint';h.textContent=o.hint;w.appendChild(h)}
+    els.opts.appendChild(w);
+  });
+  applyWhen();
+}
+function applyWhen(){
+  var v=vals();
+  (cur.options||[]).forEach(function(o){
+    var w=els.opts.querySelector('[data-opt="'+o.id+'"]');
+    if(w)w.hidden=o.when?!o.when(v):false;
+  });
+}
+function renderFiles(){
+  els.flist.innerHTML='';
+  files.forEach(function(f,i){
+    var li=document.createElement('li');li.className='fi';
+    var n=document.createElement('span');n.className='n';n.textContent=f.name;n.title=f.name;
+    var s=document.createElement('span');s.className='s';s.textContent=fmtB(f.size);
+    li.appendChild(n);li.appendChild(s);
+    if(cur.ordered){
+      [['▲',-1,'เลื่อนขึ้น'],['▼',1,'เลื่อนลง']].forEach(function(a){
+        var b=document.createElement('button');b.type='button';b.className='ib';b.textContent=a[0];b.setAttribute('aria-label',a[2]+' '+f.name);
+        b.disabled=busy||(i+a[1]<0)||(i+a[1]>=files.length);
+        b.addEventListener('click',function(){var t=files[i];files[i]=files[i+a[1]];files[i+a[1]]=t;renderFiles()});
+        li.appendChild(b);
+      });
+    }
+    var x=document.createElement('button');x.type='button';x.className='ib';x.textContent='✕';x.setAttribute('aria-label','เอา '+f.name+' ออก');x.disabled=busy;
+    x.addEventListener('click',function(){files.splice(i,1);renderFiles()});
+    li.appendChild(x);els.flist.appendChild(li);
+  });
+}
+function addFiles(list){
+  var arr=Array.prototype.slice.call(list||[]),ok=[],bad=0;
+  arr.forEach(function(f){
+    var isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name),isImg=/^image\//.test(f.type)||/\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(f.name);
+    if((cur.kind==='pdf'&&isPdf)||(cur.kind==='image'&&isImg))ok.push(f);else bad++;
+  });
+  if(bad)toast('ข้ามไฟล์ที่ประเภทไม่ตรงกับเครื่องมือนี้ '+bad+' ไฟล์');
+  if(!ok.length)return;
+  files=cur.multi?files.concat(ok):[ok[0]];
+  clearResults();renderFiles();
+}
+function clearResults(){
+  urls.forEach(function(u){URL.revokeObjectURL(u)});urls=[];results=[];
+  els.resCard.hidden=true;els.rl.innerHTML='';els.ftr.innerHTML='';els.resErr.innerHTML='';
+}
+function setProg(f,t){
+  els.prog.hidden=false;els.barI.style.width=Math.round(Math.max(0,Math.min(1,f))*100)+'%';if(t)els.progT.textContent=t;
+}
+function resultItem(r){
+  var d=document.createElement('div');d.className='ri';
+  var th=document.createElement('div');th.className='th';
+  if(/^image\//.test(r.blob.type)){var u=URL.createObjectURL(r.blob);urls.push(u);var im=document.createElement('img');im.src=u;im.alt='';th.appendChild(im)}
+  else th.textContent='.'+(r.name.split('.').pop()||'').toLowerCase();
+  var m=document.createElement('div');m.className='m';
+  var b=document.createElement('b');b.textContent=r.name;var s=document.createElement('small');s.textContent=(r.note||'')+(r.note?' · ':'')+fmtB(r.blob.size);
+  if(r.cls)s.className=r.cls;
+  m.appendChild(b);m.appendChild(s);
+  var btn=document.createElement('button');btn.type='button';btn.className='btn sm primary';btn.textContent='บันทึก';
+  btn.addEventListener('click',function(){saveFile(r.name,r.blob)});
+  d.appendChild(th);d.appendChild(m);d.appendChild(btn);return d;
+}
+function renderFooter(){
+  els.ftr.innerHTML='';
+  if(results.length>1){
+    var b=document.createElement('button');b.type='button';b.className='btn';b.textContent='บันทึกทั้งหมดเป็น .zip ('+results.length+' ไฟล์)';
+    b.addEventListener('click',async function(){
+      b.disabled=true;
+      try{
+        var Z=need('JSZip'),z=new Z(),used={};
+        results.forEach(function(r){var n=r.name;if(used[n]){var e=n.lastIndexOf('.');n=n.slice(0,e)+'-'+used[n]+n.slice(e);used[r.name]++}else used[n]=1;z.file(n,r.blob)});
+        var zb=await z.generateAsync({type:'blob',compression:'STORE'});
+        await saveFile('converted-files.zip',zb);
+      }catch(e){toast('สร้างไฟล์ zip ไม่สำเร็จ')}
+      b.disabled=false;
+    });
+    els.ftr.appendChild(b);
+  }
+}
+function setBusy(b){
+  busy=b;els.run.disabled=b;els.clear.disabled=b;els.stop.hidden=!b;
+  Array.prototype.forEach.call(els.opts.querySelectorAll('input,select'),function(e){e.disabled=b});
+  renderFiles();
+}
+async function run(){
+  if(busy)return;
+  if(!files.length){toast('เลือกไฟล์ก่อน');return}
+  var v=vals(),bad=cur.validate&&cur.validate(v,files);
+  if(bad){toast(bad);return}
+  clearResults();els.resCard.hidden=false;els.resH.textContent='ผลลัพธ์';
+  ctl=new AbortController();setBusy(true);setProg(0,'เริ่มทำงาน');
+  var errs=[];
+  var ctx={files:files.slice(),v:v,signal:ctl.signal,
+    set:setProg,
+    chk:function(){if(ctl.signal.aborted)throw Object.assign(new Error('ยกเลิกแล้ว'),{cancelled:true})},
+    add:function(r){results.push(r);els.rl.appendChild(resultItem(r));renderFooter()},
+    fail:function(name,e){if(e&&e.cancelled)throw e;errs.push((name?name+': ':'')+(e&&e.message||'เกิดข้อผิดพลาด'))}
+  };
+  try{await cur.run(ctx);setProg(1,'เสร็จแล้ว')}
+  catch(e){if(e&&e.cancelled){toast('ยกเลิกแล้ว')}else errs.push(e&&e.message||'เกิดข้อผิดพลาดที่ไม่คาดคิด')}
+  finally{setBusy(false);ctl=null}
+  els.resErr.innerHTML='';
+  errs.forEach(function(m){var d=document.createElement('div');d.className='err';d.style.marginBottom='8px';d.textContent=m;els.resErr.appendChild(d)});
+  if(results.length)els.resH.textContent='ผลลัพธ์ '+results.length+' ไฟล์';
+  else if(!errs.length)els.resCard.hidden=true;
+  setTimeout(function(){els.prog.hidden=true},900);
+  if(!els.resCard.hidden)els.resCard.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ---------- wiring ---------- */
+els.drop.addEventListener('click',function(){if(!busy)els.picker.click()});
+els.drop.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!busy)els.picker.click()}});
+els.picker.addEventListener('change',function(){addFiles(els.picker.files);els.picker.value=''});
+['dragenter','dragover'].forEach(function(n){els.drop.addEventListener(n,function(e){e.preventDefault();els.drop.classList.add('over')})});
+['dragleave','drop'].forEach(function(n){els.drop.addEventListener(n,function(e){e.preventDefault();els.drop.classList.remove('over')})});
+els.drop.addEventListener('drop',function(e){if(!busy)addFiles(e.dataTransfer&&e.dataTransfer.files)});
+els.run.addEventListener('click',run);
+els.stop.addEventListener('click',function(){if(ctl)ctl.abort()});
+els.clear.addEventListener('click',function(){files=[];clearResults();renderFiles();els.prog.hidden=true});
+
+renderNav();
+var h=(location.hash||'').replace('#','');
+select(BYID[h]?h:TOOLS[0].id);
+})();
+</script>
+
+</body></html>
