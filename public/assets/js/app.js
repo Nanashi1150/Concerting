@@ -3,10 +3,12 @@ import { saveFile } from './core/runtime.js';
 import { IMG_ACCEPT } from './tools/options.js';
 import { TOOLS, BYID } from './tools/index.js';
 import { animateToolChange } from './core/motion.js';
+import { createQualityPicker } from './core/quality-picker.js';
 
 /* ---------- UI state ---------- */
 var cur=TOOLS[0],files=[],results=[],urls=[],saved={},ctl=null,busy=false;
 var pageReady=false;
+var qualityPicker=null;
 var els={nav:$('#nav'),drop:$('#drop'),picker:$('#picker'),flist:$('#flist'),opts:$('#opts'),note:$('#note'),run:$('#run'),stop:$('#stop'),clear:$('#clear'),prog:$('#prog'),barI:$('#barI'),progT:$('#progT'),resCard:$('#resCard'),rl:$('#rl'),ftr:$('#ftr'),resErr:$('#resErr'),resH:$('#resH')};
 
 function renderNav(){
@@ -52,12 +54,15 @@ function vals(){
   return v;
 }
 function renderOpts(){
+  if(qualityPicker)qualityPicker.dispose();qualityPicker=null;
   els.opts.innerHTML='';var sv=saved[cur.id]=saved[cur.id]||{};
   (cur.options||[]).forEach(function(o){
-    var w=document.createElement('div');w.className='opt'+(o.type==='checkbox'?' ck':'');w.dataset.opt=o.id;
+    var w=document.createElement(o.type==='quality'?'fieldset':'div');w.className='opt'+(o.type==='checkbox'?' ck':'')+(o.type==='quality'?' quality-opt':'');w.dataset.opt=o.id;
     var val=sv[o.id]!==undefined?sv[o.id]:o.def,id='o_'+o.id,inp;
-    function lab(){var l=document.createElement('label');l.htmlFor=id;l.textContent=o.label;return l}
-    if(o.type==='select'){
+    function lab(){var l=document.createElement(o.type==='quality'?'legend':'label');l.htmlFor=id;l.textContent=o.label;return l}
+    if(o.type==='quality'){
+      w.appendChild(lab());qualityPicker=createQualityPicker(id,val);inp=qualityPicker.input;w.appendChild(qualityPicker.element);
+    }else if(o.type==='select'){
       w.appendChild(lab());inp=document.createElement('select');
       o.choices.forEach(function(c){var op=document.createElement('option');op.value=c[0];op.textContent=c[1];inp.appendChild(op)});inp.value=val;
     }else if(o.type==='range'){
@@ -72,7 +77,7 @@ function renderOpts(){
       if(o.type==='password')inp.autocomplete='new-password';
     }
     inp.id=id;
-    var ev=o.type==='checkbox'||o.type==='select'?'change':'input';
+    var ev=o.type==='checkbox'||o.type==='select'||o.type==='quality'?'change':'input';
     inp.addEventListener(ev,function(){sv[o.id]=o.type==='checkbox'?inp.checked:o.type==='range'?Number(inp.value):inp.value;applyWhen()});
     if(o.type!=='checkbox')w.appendChild(inp);
     if(o.hint){var h=document.createElement('div');h.className='hint';h.textContent=o.hint;w.appendChild(h)}
@@ -86,6 +91,7 @@ function applyWhen(){
     var w=els.opts.querySelector('[data-opt="'+o.id+'"]');
     if(w)w.hidden=o.when?!o.when(v):false;
   });
+  if(qualityPicker)qualityPicker.update(files,v,cur);
 }
 function renderFiles(){
   els.flist.innerHTML='';
@@ -106,6 +112,7 @@ function renderFiles(){
     x.addEventListener('click',function(){files.splice(i,1);renderFiles()});
     li.appendChild(x);els.flist.appendChild(li);
   });
+  if(qualityPicker)qualityPicker.update(files,vals(),cur);
 }
 function addFiles(list){
   var arr=Array.prototype.slice.call(list||[]),ok=[],bad=0;
@@ -145,8 +152,12 @@ function renderFooter(){
     b.addEventListener('click',async function(){
       b.disabled=true;
       try{
-        var Z=need('JSZip'),z=new Z(),used={};
-        results.forEach(function(r){var n=r.name;if(used[n]){var e=n.lastIndexOf('.');n=n.slice(0,e)+'-'+used[n]+n.slice(e);used[r.name]++}else used[n]=1;z.file(n,r.blob)});
+        var Z=need('JSZip'),z=new Z(),used=new Set();
+        results.forEach(function(r){
+          var n=r.name,e=n.lastIndexOf('.'),base=e>0?n.slice(0,e):n,extension=e>0?n.slice(e):'',suffix=1;
+          while(used.has(n)){n=base+'-'+suffix+extension;suffix++}
+          used.add(n);z.file(n,r.blob);
+        });
         var zb=await z.generateAsync({type:'blob',compression:'STORE'});
         await saveFile('converted-files.zip',zb);
       }catch(e){toast('สร้างไฟล์ zip ไม่สำเร็จ')}

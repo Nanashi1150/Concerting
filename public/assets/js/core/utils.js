@@ -1,5 +1,5 @@
 var $=function(s){return document.querySelector(s)};
-var fmtB=function(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(n<10240?1:0)+' KB':(n/1048576).toFixed(2)+' MB'};
+var fmtB=function(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(n<10240?1:0)+' KiB':(n/1048576).toFixed(2)+' MiB'};
 var baseName=function(n){return n.replace(/\.[^.\/\\]+$/,'')};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
 var toastT;

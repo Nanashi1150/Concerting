@@ -3,3 +3,6 @@ dist/
 .vercel/
 .env*
 !.env.example
+.image-verification-*/
+artifacts/
+test-results/
